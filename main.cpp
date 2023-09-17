@@ -1,4 +1,5 @@
 #include <iostream>
+#include <string>
 
 template <typename T>
 class LinkedList;
@@ -10,6 +11,7 @@ class Node {
 private:
     T data;
     Node<T> *next;
+    Node<T> *parent;
     LinkedList<T> *children;
 public:
     Node();
@@ -18,6 +20,7 @@ public:
     T getData();
     void setNext(Node<T> *current);
     Node<T>* getNext();
+    Node<T>* getParent();
     LinkedList<T>* getChildren();
     ~Node();
 };
@@ -53,6 +56,11 @@ void Node<T>::setNext(Node<T> *current){
 template <typename T>
 Node<T>* Node<T>::getNext(){
     return next;
+}
+
+template <typename T>
+Node<T>* Node<T>::getParent(){
+    return parent;
 }
 
 template <typename T>
@@ -113,7 +121,7 @@ template <typename T>
 void LinkedList<T>::print(){
     Node<T> *current = first;
     while (current!=NULL){
-        std::cout << current->getData() << " -> ";
+        std::cout << current->getData() << " ";
         current = current->getNext();
     }
     std::cout << std::endl;
@@ -150,17 +158,20 @@ LinkedList<T>::~LinkedList(){
     delete first;
 }
 
+// * Tree Class
+
 template <typename T>
 class Tree{
 private:
     Node<T> *root;
-    Node<T>* search(T t);
-    Node<T>* search(Node<T>* current, T t);
 public:
     Tree();
     Tree(T t);
     void add(T t);
-    void add(Node<T>* current ,T t);
+    void add(Node<T>* parent ,T t);
+    Node<T>* getRoot();
+    Node<T>* search(T t);
+    Node<T>* search(Node<T>* current, T t);
     ~Tree();
 };
 
@@ -176,7 +187,12 @@ Tree<T>::Tree(T t){
 
 template <typename T>
 void Tree<T>::add(T t){
+    add(root, t);
+}
 
+template <typename T>
+void Tree<T>::add(Node<T>* parent, T t){
+    parent->getChildren()->add(t);
 }
 
 template <typename T>
@@ -186,17 +202,25 @@ Node<T>* Tree<T>::search(T t){
 
 template <typename T>
 Node<T>* Tree<T>::search(Node<T>* current, T t){
-    if(current->getData() == t){
-        return current;
+    while (current != NULL){
+        if(current->getData() == t) return current;
+
+        if(!current->getChildren()->isEmpty()){
+            Node<T> *children = current->getChildren()->getFirst();
+            Node<T> *result = search(children, t);
+            if(result != NULL){
+                return result;
+            }
+        }
+
+        current = current->getNext();
     }
-
-    if(current->getChildren()->isEmpty) return;
-
-    Node<T> *children = current->getChildren()->getFirst();
-
-    search(children, t);
-
     return NULL;
+}
+
+template <typename T>
+Node<T>* Tree<T>::getRoot(){
+    return root;
 }
 
 template <typename T>
@@ -204,14 +228,42 @@ Tree<T>::~Tree(){
     delete root;
 }
 
-
 int main(){
-    LinkedList<int> *list = new LinkedList<int>();
-
-    list->add(4);
-    list->add(13);
-    list->add(11);
-    list->add(111);
-
-    list->print();
+    Tree<std::string> *tree = new Tree<std::string>("root");
+    Node<std::string> *actualPath = tree->getRoot();
+    std::string cmd;
+    while(true){
+        std::cout << "> ";
+        std::getline(std::cin, cmd);
+        if(cmd == "exit"){
+            break;
+        } else if(cmd == "ls"){
+            actualPath->getChildren()->print();
+        } else if(cmd == "pwd"){
+            Node<std::string> *current = actualPath;
+            while (current->getParent()!=NULL){
+                std::cout << current->getData() << "/";
+                current = current->getParent();
+            }
+            std::cout << std::endl;
+        } else if(cmd == "cd .."){
+            if(actualPath->getParent()!=NULL){
+                actualPath = actualPath->getParent();
+            }
+        } else if(cmd.substr(0, 3) == "cd "){
+            std::string path = cmd.substr(3, cmd.length());
+            Node<std::string> *result = tree->search(path);
+            if(result != NULL){
+                actualPath = result;
+            } else {
+                std::cout << "Path not found" << std::endl;
+            }
+        } else if(cmd.substr(0, 6) == "mkdir "){
+            std::string path = cmd.substr(6, cmd.length());
+            tree->add(actualPath, path);
+        } else {
+            std::cout << "Command not found" << std::endl;
+        }
+    }
+    
 }
