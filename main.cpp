@@ -20,6 +20,7 @@ public:
     T getData();
     void setNext(Node<T> *current);
     Node<T>* getNext();
+    void setParent(Node<T> *current);
     Node<T>* getParent();
     LinkedList<T>* getChildren();
     ~Node();
@@ -59,6 +60,11 @@ Node<T>* Node<T>::getNext(){
 }
 
 template <typename T>
+void Node<T>::setParent(Node<T> *current){
+    parent = current;
+}
+
+template <typename T>
 Node<T>* Node<T>::getParent(){
     return parent;
 }
@@ -83,7 +89,7 @@ private:
 public:
     LinkedList();
     Node<T>* getFirst();
-    void add(T t);
+    Node<T>* add(T t);
     void print();
     Node<T>* search(T t);
     int getSize();
@@ -103,7 +109,7 @@ Node<T>* LinkedList<T>::getFirst(){
 }
 
 template <typename T>
-void LinkedList<T>::add(T t){
+Node<T>* LinkedList<T>::add(T t){
     Node<T> *add = new Node<T>(t);
     if(first == NULL){
         first = add;
@@ -115,6 +121,7 @@ void LinkedList<T>::add(T t){
         current->setNext(add); 
     } 
     size++;
+    return add;
 }
 
 template <typename T>
@@ -192,7 +199,8 @@ void Tree<T>::add(T t){
 
 template <typename T>
 void Tree<T>::add(Node<T>* parent, T t){
-    parent->getChildren()->add(t);
+    Node<T> *newNode = parent->getChildren()->add(t);
+    newNode->setParent(parent);
 }
 
 template <typename T>
